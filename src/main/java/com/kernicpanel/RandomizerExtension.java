@@ -36,6 +36,8 @@ public class RandomizerExtension extends ControllerExtension {
   private RemoteControl parameter;
   private SettableRangedValue randomRatio;
 
+  private SettableStringValue pageFilter;
+
   protected RandomizerExtension(
       final RandomizerExtensionDefinition definition, final ControllerHost host) {
     super(definition, host);
@@ -103,6 +105,9 @@ public class RandomizerExtension extends ControllerExtension {
     // Parameters controls
     randomRatio =
         documentState.getNumberSetting("Ratio", "Randomize Device parameters", 0, 100, 1, "%", 15);
+
+    pageFilter = documentState.getStringSetting("Page Filter", "Randomize Device parameters", 32, "");
+
     documentState
         .getSignalSetting(" ", "Randomize Device parameters", "Randomize current page")
         .addSignalObserver(randomizeCurrentPageDeviceParameters());
@@ -250,7 +255,11 @@ public class RandomizerExtension extends ControllerExtension {
               (pageIndex) -> {
                 randomizeCurrentPageDeviceParameters().call();
                 try {
-                  remoteControlsPage.selectNextPage(true);
+                  if (pageFilter.get().isEmpty()) {
+                    remoteControlsPage.selectNextPage(true);
+                  } else {
+                    remoteControlsPage.selectNextPageMatching(pageFilter.get(), true);
+                  }
                   Thread.sleep(10);
                 } catch (InterruptedException e) {
                   e.printStackTrace();
